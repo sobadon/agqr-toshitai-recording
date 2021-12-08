@@ -1,6 +1,7 @@
 package recbackup
 
 import (
+	"os"
 	"path/filepath"
 	"time"
 
@@ -40,16 +41,26 @@ func rec() error {
 		return errors.WithStack(err)
 	}
 
-	util.Mkdir(outBaseAbsPath)
+	workingDirAbs := outBaseAbsPath + "/working"
+	util.Mkdir(workingDirAbs)
+
+	archiveDirAbs := outBaseAbsPath + "/archive"
+	util.Mkdir(archiveDirAbs)
 
 	// TODO: timezone
 	now := time.Now()
 
-	outAbsPath := agqr.BuildOutPath(outBaseAbsPath, now)
+	workingAbsPath := agqr.BuildOutPath(workingDirAbs, now)
+	archiveAbsPath := agqr.BuildOutPath(archiveDirAbs, now)
 
 	// 1 hour
-	durationSec := 60 * 60
-	err = agqr.Rec(durationSec, outAbsPath)
+	durationSec := 60 * 50
+	err = agqr.Rec(durationSec, workingAbsPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = os.Rename(workingAbsPath, archiveAbsPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
