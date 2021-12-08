@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  agqr:
+    # temp tag
+    image: ghcr.io/sobadon/agqr-toshitai-recording:latest
+    command: /app/agqr-toshitai-recording rec-backup
+    volumes:
+      - ./data/rec:/app/rec
