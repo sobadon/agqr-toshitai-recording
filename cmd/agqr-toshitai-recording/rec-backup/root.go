@@ -55,7 +55,7 @@ func rec() error {
 	archiveAbsPath := agqr.BuildOutPath(archiveDirAbs, now)
 
 	// 1 hour
-	durationSec := 60 * 50
+	durationSec := 60 * 60
 	err = agqr.Rec(durationSec, workingAbsPath)
 	if err != nil {
 		// TODO: とりあえずの処置なので後でどうにかする
