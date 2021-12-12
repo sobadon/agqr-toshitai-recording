@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	m3u8URL = "https://fms2.uniqueradio.jp/agqr10/aandg1.m3u8"
+	// https://www.uniqueradio.jp/agplayer5/hls/mbr-0-cdn.m3u8
+	m3u8URL = "https://icraft.hs.llnwd.net/agqr10/aandg1.m3u8"
 )
 
 func Rec(durationSec int, outPath string) error {
