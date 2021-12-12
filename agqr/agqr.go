@@ -24,6 +24,7 @@ func Rec(durationSec int, outPath string) error {
 		"-vcodec", "copy",
 		"-acodec", "copy",
 		// "-bsf:a", "aac_adtstoasc",
+		"-loglevel", "warning",
 		outPath,
 	)
 
