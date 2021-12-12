@@ -19,6 +19,8 @@ func Rec(durationSec int, outPath string) error {
 		"-y",
 		"-allowed_extensions", "ALL",
 		"-protocol_whitelist", "file,crypto,http,https,tcp,tls",
+		// reconnect には 1 か true を与える必要がある
+		"-reconnect", "true",
 		"-i", m3u8URL,
 		"-t", strconv.Itoa(durationSec),
 		"-vcodec", "copy",
