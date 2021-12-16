@@ -11,8 +11,13 @@ import (
 )
 
 const (
-	// https://www.uniqueradio.jp/agplayer5/hls/mbr-0-cdn.m3u8
-	m3u8URL = "https://icraft.hs.llnwd.net/agqr10/aandg1.m3u8"
+	// iOS Alexa アプリ + mitmproxxy で勝利
+	// （Fire TV Stick + mitmproxy は Amazon.com アカウントでログインしなければならず .com では超 A&G+ のスキルが使えないため敗北）
+	// iOS の Alexa アプリではあたかも音声のみをダウンロードしている（`iphone3G` みたいなやつからリンクされている `aac`）のではなく、
+	// なんとなんと、普通に動画（`ts`）をダウンロードしてその音声のみを端末のスピーカーから流している
+	// 640x360
+	// https://www.uniqueradio.jp/agplayerf/hls/amznecho.php
+	m3u8URL = "https://icraft.hs.llnwd.net/agqr1/iphone3/HLS_Layer1s.m3u8"
 )
 
 func Rec(durationSec int, outPath string) error {
