@@ -17,7 +17,10 @@ const (
 	// なんとなんと、普通に動画（`ts`）をダウンロードしてその音声のみを端末のスピーカーから流している
 	// 640x360
 	// https://www.uniqueradio.jp/agplayerf/hls/amznecho.php
-	m3u8URL = "https://icraft.hs.llnwd.net/agqr1/iphone3/HLS_Layer1s.m3u8"
+	m3u8URLAlexa = "https://icraft.hs.llnwd.net/agqr1/iphone3/HLS_Layer1s.m3u8"
+
+	// 低画質
+	m3u8URLWeb = "https://icraft.hs.llnwd.net/agqr10/aandg3.m3u8"
 )
 
 func Rec(durationSec int, outPath string) error {
@@ -27,7 +30,7 @@ func Rec(durationSec int, outPath string) error {
 		"-protocol_whitelist", "file,crypto,http,https,tcp,tls",
 		// reconnect には 1 か true を与える必要がある
 		"-reconnect", "true",
-		"-i", m3u8URL,
+		"-i", m3u8URLWeb,
 		"-t", strconv.Itoa(durationSec),
 		"-vcodec", "copy",
 		"-acodec", "copy",
