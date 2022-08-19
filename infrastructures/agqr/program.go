@@ -61,7 +61,7 @@ type client struct {
 	baseURL    *url.URL
 }
 
-func New() repository.Program {
+func New() repository.Station {
 	baseURL, err := url.Parse("https://www.joqr.co.jp/rss/program/json.php?type=ag")
 	if err != nil {
 		panic(err)
