@@ -48,7 +48,7 @@ type programDatabase struct {
 	DB *sqlx.DB
 }
 
-func New(db *sqlx.DB) repository.ProgramDatabase {
+func New(db *sqlx.DB) repository.ProgramPersistence {
 	return &programDatabase{
 		DB: db,
 	}
