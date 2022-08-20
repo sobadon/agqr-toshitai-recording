@@ -8,6 +8,8 @@ require (
 )
 
 require (
+	github.com/jmoiron/sqlx v1.3.5 // indirect
+	github.com/mattn/go-sqlite3 v1.14.15 // indirect
 	gopkg.in/dnaeon/go-vcr.v3 v3.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

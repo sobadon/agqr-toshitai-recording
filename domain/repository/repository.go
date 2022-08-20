@@ -10,3 +10,7 @@ import (
 type Station interface {
 	GetPrograms(ctx context.Context, date date.Date) ([]program.Program, error)
 }
+
+type ProgramDatabase interface {
+	Save(ctx context.Context, pgram program.Program) error
+}

@@ -172,7 +172,13 @@ func agqrProgramToProgram(agqrPgram agqrProgram) (program.Program, error) {
 		return program.Program{}, err
 	}
 
+	id, err := strconv.Atoi(agqrPgram.ScheduleProgramID)
+	if err != nil {
+		return program.Program{}, errors.Wrap(errutil.ErrInternal, err.Error())
+	}
+
 	pgram := program.Program{
+		ID:    id,
 		Title: agqrPgram.ProgramTitle,
 		Start: start,
 		End:   end,

@@ -5,6 +5,9 @@ var (
 	ErrJSONDecode      = NewInternalError("json decode error")
 	ErrTimeParse       = NewInternalError("time parse error")
 	ErrGetProgramNotOK = NewInternalError("http get program status code not ok")
+	ErrDatabaseOpen    = NewInternalError("database open error")
+	ErrDatabaseQuery   = NewInternalError("database query error")
+	ErrDatabaseScan    = NewInternalError("database scan error")
 	// 分類できない系
 	ErrInternal = NewInternalError("internal something error")
 )

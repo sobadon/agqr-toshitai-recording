@@ -199,6 +199,7 @@ func Test_agqrProgramToProgram(t *testing.T) {
 				},
 			},
 			want: program.Program{
+				ID:    514579,
 				Title: "セブン-イレブンpresents 佐倉としたい大西",
 				Start: time.Date(2022, 8, 3, 11, 30, 0, 0, timeutil.LocationJST()),
 				End:   time.Date(2022, 8, 3, 12, 0, 0, 0, timeutil.LocationJST()),
@@ -223,6 +224,7 @@ func Test_agqrProgramToProgram(t *testing.T) {
 				},
 			},
 			want: program.Program{
+				ID:    514569,
 				Title: "鷲崎健のヨルナイト×ヨルナイト",
 				Start: time.Date(2022, 8, 4, 0, 0, 0, 0, timeutil.LocationJST()),
 				End:   time.Date(2022, 8, 4, 0, 30, 0, 0, timeutil.LocationJST()),
