@@ -135,3 +135,12 @@ func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, durati
 
 	return pgrams, nil
 }
+
+func (p *programDatabase) ChangeStatus(ctx context.Context, pgram program.Program, newStatus program.Status) error {
+	_, err := p.DB.NamedExecContext(ctx, `update programs set status = :status where id = :id`, map[string]interface{}{"status": newStatus, "id": pgram.ID})
+	if err != nil {
+		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+
+	return nil
+}

@@ -18,4 +18,7 @@ type ProgramPersistence interface {
 
 	// duration 後までに始まる番組を取得
 	LoadStartIn(ctx context.Context, now time.Time, duration time.Duration) ([]program.Program, error)
+
+	// pgram の status を newStatus に変更
+	ChangeStatus(ctx context.Context, pgram program.Program, newStatus program.Status) error
 }

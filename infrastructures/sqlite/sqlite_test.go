@@ -232,3 +232,75 @@ func Test_programDatabase_LoadStartIn(t *testing.T) {
 		})
 	}
 }
+
+func Test_programDatabase_ChangeStatus(t *testing.T) {
+	type args struct {
+		pgram     program.Program
+		newStatus program.Status
+	}
+	tests := []struct {
+		name    string
+		prepare func(db *sqlx.DB) error
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			prepare: func(db *sqlx.DB) error {
+				_, err := db.Exec(`insert into programs (id, title, start, end, status) values
+				("514529", "テスト番組名", "2022-08-09 23:59:00+09:00", "2022-08-10 00:00:00+09:00", "done"),
+				("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00", "recording")
+				`)
+				return err
+			},
+			args: args{
+				pgram: program.Program{
+					ID:     514530,
+					Title:  "鷲崎健のヨルナイト×ヨルナイト",
+					Start:  time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
+					End:    time.Date(2022, 8, 10, 0, 30, 0, 0, timeutil.LocationJST()),
+					Status: program.StatusRecording,
+				},
+				newStatus: program.StatusDone,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempFilename := tempFilename(t)
+			defer os.Remove(tempFilename)
+			db, err := sqlx.Open("sqlite3", tempFilename)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			p := &programDatabase{
+				DB: db,
+			}
+
+			err = Setup(p.DB)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = tt.prepare(p.DB)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err := p.ChangeStatus(context.Background(), tt.args.pgram, tt.args.newStatus); (err != nil) != tt.wantErr {
+				t.Errorf("programDatabase.ChangeStatus() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			var gotStatus program.Status
+			err = p.DB.Get(&gotStatus, `select status from programs where id = ?`, tt.args.pgram.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if gotStatus != tt.args.newStatus {
+				t.Errorf("programDatabase.ChangeStatus() gotStatus = %v, wantStatus %v", gotStatus, tt.args.newStatus)
+			}
+		})
+	}
+}
