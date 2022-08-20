@@ -16,7 +16,11 @@ import (
 )
 
 func (c *client) Rec(ctx context.Context, basePath string, targetPgram program.Program) error {
-	filepath := buildFilepath(basePath, targetPgram)
+	file := buildFilepath(basePath, targetPgram)
+	err := fileutil.MkdirAllIfNotExist(filepath.Dir(file))
+	if err != nil {
+		return errors.Wrap(errutil.ErrInternal, err.Error())
+	}
 	duration := calculateProgramDuration(targetPgram)
 
 	// TODO: ffmpeg のログを減らしたり
@@ -28,13 +32,13 @@ func (c *client) Rec(ctx context.Context, basePath string, targetPgram program.P
 		"-t", strconv.Itoa(int(duration.Seconds())),
 		"-vcodec", "copy",
 		"-acodec", "copy",
-		filepath,
+		file,
 	)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmd.Start()
+	err = cmd.Start()
 	if err != nil {
 		return errors.Wrap(errutil.ErrFfmpeg, err.Error())
 	}

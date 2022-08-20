@@ -1,6 +1,9 @@
 package fileutil
 
-import "strings"
+import (
+	"os"
+	"strings"
+)
 
 // ファイル名に使えない・面倒なようなものを置換する
 func SanitizeReplaceName(name string) string {
@@ -26,4 +29,11 @@ func SanitizeReplaceName(name string) string {
 		"+", "＋",
 	)
 	return rep.Replace(name)
+}
+
+func MkdirAllIfNotExist(dir string) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return os.MkdirAll(dir, 0700)
+	}
+	return nil
 }
