@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
 	"github.com/sobadon/agqr-toshitai-recording/domain/repository"
