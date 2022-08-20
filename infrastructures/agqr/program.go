@@ -157,10 +157,11 @@ func agqrProgramToProgram(agqrPgram agqrProgram) (program.Program, error) {
 	}
 
 	pgram := program.Program{
-		ID:    id,
-		Title: agqrPgram.ProgramTitle,
-		Start: start,
-		End:   end,
+		ID:     id,
+		Title:  agqrPgram.ProgramTitle,
+		Start:  start,
+		End:    end,
+		Status: program.StatusScheduled,
 		// TODO: Personality すぐ必要なわけではないならいいや
 	}
 	return pgram, nil

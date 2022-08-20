@@ -37,10 +37,11 @@ func Test_programDatabase_Save(t *testing.T) {
 			prepare: func(db *sqlx.DB) error { return nil },
 			args: args{
 				pgram: program.Program{
-					ID:    514530,
-					Title: "鷲崎健のヨルナイト×ヨルナイト",
-					Start: time.Date(2022, 8, 4, 0, 0, 0, 0, timeutil.LocationJST()),
-					End:   time.Date(2022, 8, 4, 0, 30, 0, 0, timeutil.LocationJST()),
+					ID:     514530,
+					Title:  "鷲崎健のヨルナイト×ヨルナイト",
+					Start:  time.Date(2022, 8, 4, 0, 0, 0, 0, timeutil.LocationJST()),
+					End:    time.Date(2022, 8, 4, 0, 30, 0, 0, timeutil.LocationJST()),
+					Status: program.StatusScheduled,
 				},
 			},
 			wantErr: false,
@@ -48,17 +49,18 @@ func Test_programDatabase_Save(t *testing.T) {
 		{
 			name: "既に存在している番組を追加しようとしてもエラーにならない",
 			prepare: func(db *sqlx.DB) error {
-				_, err := db.Exec(`insert into programs (id, title, start, end) values (
-					"514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-04 00:00:00+09:00", "2022-08-04 00:30:00+09:00"
+				_, err := db.Exec(`insert into programs (id, title, start, end, status) values (
+					"514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-04 00:00:00+09:00", "2022-08-04 00:30:00+09:00", "scheduled"
 				)`)
 				return err
 			},
 			args: args{
 				pgram: program.Program{
-					ID:    514530,
-					Title: "鷲崎健のヨルナイト×ヨルナイト",
-					Start: time.Date(2022, 8, 4, 0, 0, 0, 0, timeutil.LocationJST()),
-					End:   time.Date(2022, 8, 4, 0, 30, 0, 0, timeutil.LocationJST()),
+					ID:     514530,
+					Title:  "鷲崎健のヨルナイト×ヨルナイト",
+					Start:  time.Date(2022, 8, 4, 0, 0, 0, 0, timeutil.LocationJST()),
+					End:    time.Date(2022, 8, 4, 0, 30, 0, 0, timeutil.LocationJST()),
+					Status: program.StatusScheduled,
 				},
 			},
 		},
@@ -109,9 +111,9 @@ func Test_programDatabase_LoadStartIn(t *testing.T) {
 		{
 			name: "番組 1 つ取得できる",
 			prepare: func(db *sqlx.DB) error {
-				_, err := db.Exec(`insert into programs (id, title, start, end) values
-					("514529", "テスト番組名", "2022-08-09 23:50:00+09:00", "2022-08-10 00:00:00+09:00"),
-					("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00")
+				_, err := db.Exec(`insert into programs (id, title, start, end, status) values
+					("514529", "テスト番組名", "2022-08-09 23:50:00+09:00", "2022-08-10 00:00:00+09:00", "recording"),
+					("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00", "scheduled")
 				`)
 				return err
 			},
@@ -121,10 +123,11 @@ func Test_programDatabase_LoadStartIn(t *testing.T) {
 			},
 			want: []program.Program{
 				{
-					ID:    514530,
-					Title: "鷲崎健のヨルナイト×ヨルナイト",
-					Start: time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
-					End:   time.Date(2022, 8, 10, 0, 30, 0, 0, timeutil.LocationJST()),
+					ID:     514530,
+					Title:  "鷲崎健のヨルナイト×ヨルナイト",
+					Start:  time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
+					End:    time.Date(2022, 8, 10, 0, 30, 0, 0, timeutil.LocationJST()),
+					Status: program.StatusScheduled,
 				},
 			},
 			wantErr: false,
@@ -133,10 +136,10 @@ func Test_programDatabase_LoadStartIn(t *testing.T) {
 			// agqr で 2, 3 分間の番組ってないかも
 			name: "番組 2 つ取得できる",
 			prepare: func(db *sqlx.DB) error {
-				_, err := db.Exec(`insert into programs (id, title, start, end) values
-				("514528", "テスト番組名1", "2022-08-09 23:50:00+09:00", "2022-08-10 23:59:00+09:00"),
-				("514529", "テスト番組名2", "2022-08-09 23:59:00+09:00", "2022-08-10 00:00:00+09:00"),
-				("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00")
+				_, err := db.Exec(`insert into programs (id, title, start, end, status) values
+				("514528", "テスト番組名1", "2022-08-09 23:50:00+09:00", "2022-08-10 23:59:00+09:00", "recording"),
+				("514529", "テスト番組名2", "2022-08-09 23:59:00+09:00", "2022-08-10 00:00:00+09:00", "scheduled"),
+				("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00", "scheduled")
 				`)
 				return err
 			},
@@ -146,26 +149,44 @@ func Test_programDatabase_LoadStartIn(t *testing.T) {
 			},
 			want: []program.Program{
 				{
-					ID:    514529,
-					Title: "テスト番組名2",
-					Start: time.Date(2022, 8, 9, 23, 59, 0, 0, timeutil.LocationJST()),
-					End:   time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
+					ID:     514529,
+					Title:  "テスト番組名2",
+					Start:  time.Date(2022, 8, 9, 23, 59, 0, 0, timeutil.LocationJST()),
+					End:    time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
+					Status: program.StatusScheduled,
 				},
 				{
-					ID:    514530,
-					Title: "鷲崎健のヨルナイト×ヨルナイト",
-					Start: time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
-					End:   time.Date(2022, 8, 10, 0, 30, 0, 0, timeutil.LocationJST()),
+					ID:     514530,
+					Title:  "鷲崎健のヨルナイト×ヨルナイト",
+					Start:  time.Date(2022, 8, 10, 0, 0, 0, 0, timeutil.LocationJST()),
+					End:    time.Date(2022, 8, 10, 0, 30, 0, 0, timeutil.LocationJST()),
+					Status: program.StatusScheduled,
 				},
 			},
 			wantErr: false,
 		},
 		{
+			name: "status が scheduled なものだけ取得する",
+			prepare: func(db *sqlx.DB) error {
+				_, err := db.Exec(`insert into programs (id, title, start, end, status) values
+					("514529", "テスト番組名", "2022-08-09 23:50:00+09:00", "2022-08-10 00:00:00+09:00", "recording"),
+					("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00", "failed")
+				`)
+				return err
+			},
+			args: args{
+				now:      time.Date(2022, 8, 9, 23, 59, 30, 0, timeutil.LocationJST()),
+				duration: 1 * time.Minute,
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
 			name: "該当番組がなければ nil を返す",
 			prepare: func(db *sqlx.DB) error {
-				_, err := db.Exec(`insert into programs (id, title, start, end) values
-				("514529", "テスト番組名", "2022-08-09 23:59:00+09:00", "2022-08-10 00:00:00+09:00"),
-				("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00")
+				_, err := db.Exec(`insert into programs (id, title, start, end, status) values
+				("514529", "テスト番組名", "2022-08-09 23:59:00+09:00", "2022-08-10 00:00:00+09:00", "done"),
+				("514530", "鷲崎健のヨルナイト×ヨルナイト", "2022-08-10 00:00:00+09:00", "2022-08-10 00:30:00+09:00", "recording")
 				`)
 				return err
 			},

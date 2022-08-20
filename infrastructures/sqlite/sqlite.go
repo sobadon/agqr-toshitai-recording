@@ -13,27 +13,30 @@ import (
 )
 
 type programSqlite struct {
-	ID    int       `db:"id"`
-	Title string    `db:"title"`
-	Start time.Time `db:"start"`
-	End   time.Time `db:"end"`
+	ID     int       `db:"id"`
+	Title  string    `db:"title"`
+	Start  time.Time `db:"start"`
+	End    time.Time `db:"end"`
+	Status string    `db:"status"`
 }
 
 func programSqliteToModelProgram(pgramSqlite programSqlite) program.Program {
 	return program.Program{
-		ID:    pgramSqlite.ID,
-		Title: pgramSqlite.Title,
-		Start: pgramSqlite.Start,
-		End:   pgramSqlite.End,
+		ID:     pgramSqlite.ID,
+		Title:  pgramSqlite.Title,
+		Start:  pgramSqlite.Start,
+		End:    pgramSqlite.End,
+		Status: program.Status(pgramSqlite.Status),
 	}
 }
 
 func modelProgramToProgramSqlite(pgram program.Program) programSqlite {
 	return programSqlite{
-		ID:    pgram.ID,
-		Title: pgram.Title,
-		Start: pgram.Start,
-		End:   pgram.End,
+		ID:     pgram.ID,
+		Title:  pgram.Title,
+		Start:  pgram.Start,
+		End:    pgram.End,
+		Status: pgram.Status.String(),
 	}
 }
 
@@ -47,11 +50,13 @@ func NewDB(dbPath string) (*sqlx.DB, error) {
 
 // テーブル作成
 func Setup(db *sqlx.DB) error {
+	// state: enum('scheduled', 'recording', 'done', 'failed')
 	_, err := db.Exec(`create table if not exists programs (
 		id integer primary key,
 		title text not null,
 		start timestamp not null,
 		end timestamp not null,
+		status text not null,
 		created_at timestamp not null default (datetime('now', 'localtime')),
 		updated_at timestamp not null default (datetime('now', 'localtime'))
 	);`)
@@ -101,7 +106,7 @@ func (p *programDatabase) Save(ctx context.Context, pgram program.Program) error
 	}
 
 	pgramSqlite := modelProgramToProgramSqlite(pgram)
-	_, err = p.DB.NamedExecContext(ctx, "insert into programs (id, title, start, end) values (:id, :title, :start, :end)", pgramSqlite)
+	_, err = p.DB.NamedExecContext(ctx, "insert into programs (id, title, start, end, status) values (:id, :title, :start, :end, :status)", pgramSqlite)
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
@@ -111,7 +116,7 @@ func (p *programDatabase) Save(ctx context.Context, pgram program.Program) error
 func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, duration time.Duration) ([]program.Program, error) {
 	afterAbsoluteTime := now.Add(duration)
 
-	stmt, err := p.DB.PrepareNamedContext(ctx, `select id, title, start, end from programs where :now < start and start < :after`)
+	stmt, err := p.DB.PrepareNamedContext(ctx, `select id, title, start, end, status from programs where status = 'scheduled' and :now < start and start < :after`)
 	if err != nil {
 		return nil, errors.Wrap(errutil.ErrDatabasePrepare, err.Error())
 	}
