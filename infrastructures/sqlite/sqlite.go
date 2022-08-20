@@ -12,6 +12,31 @@ import (
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
 )
 
+type programSqlite struct {
+	ID    int       `db:"id"`
+	Title string    `db:"title"`
+	Start time.Time `db:"start"`
+	End   time.Time `db:"end"`
+}
+
+func programSqliteToModelProgram(pgramSqlite programSqlite) program.Program {
+	return program.Program{
+		ID:    pgramSqlite.ID,
+		Title: pgramSqlite.Title,
+		Start: pgramSqlite.Start,
+		End:   pgramSqlite.End,
+	}
+}
+
+func modelProgramToProgramSqlite(pgram program.Program) programSqlite {
+	return programSqlite{
+		ID:    pgram.ID,
+		Title: pgram.Title,
+		Start: pgram.Start,
+		End:   pgram.End,
+	}
+}
+
 func NewDB(dbPath string) (*sqlx.DB, error) {
 	db, err := sqlx.Open("sqlite3", dbPath)
 	if err != nil {
@@ -75,22 +100,33 @@ func (p *programDatabase) Save(ctx context.Context, pgram program.Program) error
 		return nil
 	}
 
-	type programSqlite struct {
-		ID    int       `db:"id"`
-		Title string    `db:"title"`
-		Start time.Time `db:"start"`
-		End   time.Time `db:"end"`
-	}
-
-	pgramSqlite := programSqlite{
-		ID:    pgram.ID,
-		Title: pgram.Title,
-		Start: pgram.Start,
-		End:   pgram.End,
-	}
+	pgramSqlite := modelProgramToProgramSqlite(pgram)
 	_, err = p.DB.NamedExecContext(ctx, "insert into programs (id, title, start, end) values (:id, :title, :start, :end)", pgramSqlite)
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
 	return nil
+}
+
+func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, duration time.Duration) ([]program.Program, error) {
+	afterAbsoluteTime := now.Add(duration)
+
+	stmt, err := p.DB.PrepareNamedContext(ctx, `select id, title, start, end from programs where :now < start and start < :after`)
+	if err != nil {
+		return nil, errors.Wrap(errutil.ErrDatabasePrepare, err.Error())
+	}
+
+	var pgramsSqlite []programSqlite
+	err = stmt.SelectContext(ctx, &pgramsSqlite, map[string]interface{}{"now": now, "after": afterAbsoluteTime})
+	if err != nil {
+		return nil, errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+
+	var pgrams []program.Program
+	for _, pgramSqlite := range pgramsSqlite {
+		pgram := programSqliteToModelProgram(pgramSqlite)
+		pgrams = append(pgrams, pgram)
+	}
+
+	return pgrams, nil
 }

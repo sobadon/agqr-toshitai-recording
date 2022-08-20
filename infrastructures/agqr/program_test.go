@@ -112,8 +112,8 @@ func Test_client_GetPrograms(t *testing.T) {
 			rec.SetReplayableInteractions(true)
 
 			c := &client{
-				httpClient: rec.GetDefaultClient(),
-				baseURL:    baseURL,
+				httpClient:     rec.GetDefaultClient(),
+				programBaseURL: baseURL,
 			}
 			got, err := c.GetPrograms(context.Background(), tt.args.date)
 			if (err != nil) != tt.wantErr {

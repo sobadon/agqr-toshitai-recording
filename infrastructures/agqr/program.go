@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/date"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
-	"github.com/sobadon/agqr-toshitai-recording/domain/repository"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
 	"github.com/sobadon/agqr-toshitai-recording/internal/timeutil"
 )
@@ -56,28 +55,8 @@ type agqrProgram struct {
 	ProgramPersonality string `json:"program_personality"`
 }
 
-type client struct {
-	httpClient *http.Client
-	baseURL    *url.URL
-}
-
-func New() repository.Station {
-	baseURL, err := url.Parse("https://www.joqr.co.jp/rss/program/json.php?type=ag")
-	if err != nil {
-		panic(err)
-	}
-
-	httpClient := http.DefaultClient
-	httpClient.Timeout = 5 * time.Second
-
-	return &client{
-		httpClient: httpClient,
-		baseURL:    baseURL,
-	}
-}
-
 func (c *client) GetPrograms(ctx context.Context, date date.Date) ([]program.Program, error) {
-	programURL := buildURL(c.baseURL, date)
+	programURL := buildURL(c.programBaseURL, date)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, programURL.String(), nil)
 	if err != nil {
 		return nil, errors.Wrap(errutil.ErrInternal, err.Error())

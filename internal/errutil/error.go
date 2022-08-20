@@ -8,6 +8,8 @@ var (
 	ErrDatabaseOpen    = NewInternalError("database open error")
 	ErrDatabaseQuery   = NewInternalError("database query error")
 	ErrDatabaseScan    = NewInternalError("database scan error")
+	ErrDatabasePrepare = NewInternalError("database prepare error")
+	ErrFfmpeg          = NewInternalError("ffmpeg error")
 	// 分類できない系
 	ErrInternal = NewInternalError("internal something error")
 )
