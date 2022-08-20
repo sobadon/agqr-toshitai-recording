@@ -22,7 +22,7 @@ func New() repository.Station {
 
 	// 低画質
 	// https://www.uniqueradio.jp/agplayer5/player.php から取得されるもの
-	streamURL, err := url.Parse("https://icraft.hs.llnwd.net/agqr10/aandg3.m3u8")
+	streamURL, err := url.Parse("https://hlsb2.cdnext.stream.ne.jp/agqr1next/aandg1next.m3u8")
 	if err != nil {
 		panic(err)
 	}
