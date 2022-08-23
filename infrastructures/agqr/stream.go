@@ -3,13 +3,13 @@ package agqr
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
 	"github.com/sobadon/agqr-toshitai-recording/internal/fileutil"
@@ -23,11 +23,9 @@ func (c *client) Rec(ctx context.Context, basePath string, targetPgram program.P
 	}
 	duration := calculateProgramDuration(targetPgram)
 
-	// TODO: ffmpeg のログを減らしたり
 	cmd := exec.Command("ffmpeg",
 		"-y",
-		"-allowed_extensions", "ALL",
-		"-protocol_whitelist", "file,crypto,http,https,tcp,tls",
+		"-loglevel", "warning", // とりあえず決め打ち
 		"-i", c.streamURL.String(),
 		"-t", strconv.Itoa(int(duration.Seconds())),
 		"-vcodec", "copy",
@@ -35,9 +33,14 @@ func (c *client) Rec(ctx context.Context, basePath string, targetPgram program.P
 		file,
 	)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// https://github.com/rs/zerolog/issues/398
+	// log.Level(zerolog.InfoLevel).With().Logger() などとしても
+	// 出力されるログに loglevel が含まれない
+	cmd.Stdout = log.With().Str("level", zerolog.LevelInfoValue).Logger()
+	cmd.Stderr = log.With().Str("level", zerolog.LevelWarnValue).Logger()
 
+	log.Info().Msg("ffmpeg start ...")
+	log.Debug().Msg(cmd.String())
 	err = cmd.Start()
 	if err != nil {
 		return errors.Wrap(errutil.ErrFfmpeg, err.Error())

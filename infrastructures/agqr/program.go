@@ -57,11 +57,13 @@ type agqrProgram struct {
 
 func (c *client) GetPrograms(ctx context.Context, date date.Date) ([]program.Program, error) {
 	programURL := buildURL(c.programBaseURL, date)
+	log.Debug().Msgf("http get target url: %s", programURL.String())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, programURL.String(), nil)
 	if err != nil {
 		return nil, errors.Wrap(errutil.ErrInternal, err.Error())
 	}
 
+	log.Info().Msgf("fetch program .... (day = %s)", date.Format("2006-01-02"))
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(errutil.ErrHTTPRequest, err.Error())
@@ -86,6 +88,8 @@ func (c *client) GetPrograms(ctx context.Context, date date.Date) ([]program.Pro
 		pgrams = append(pgrams, pgram)
 	}
 
+	log.Info().Msg("success fetch program")
+	log.Debug().Msgf("fetched program len: %d", len(pgrams))
 	return pgrams, nil
 }
 

@@ -6,6 +6,11 @@ import (
 	"time"
 
 	"github.com/sobadon/agqr-toshitai-recording/domain/repository"
+	"github.com/sobadon/agqr-toshitai-recording/internal/logutil"
+)
+
+var (
+	log = logutil.NewLogger()
 )
 
 type client struct {

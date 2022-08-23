@@ -10,6 +10,7 @@ var (
 	ErrDatabaseScan    = NewInternalError("database scan error")
 	ErrDatabasePrepare = NewInternalError("database prepare error")
 	ErrFfmpeg          = NewInternalError("ffmpeg error")
+	ErrScheduler       = NewInternalError("scheduler error")
 	// 分類できない系
 	ErrInternal = NewInternalError("internal something error")
 )

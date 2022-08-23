@@ -10,6 +10,11 @@ import (
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
 	"github.com/sobadon/agqr-toshitai-recording/domain/repository"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
+	"github.com/sobadon/agqr-toshitai-recording/internal/logutil"
+)
+
+var (
+	log = logutil.NewLogger()
 )
 
 type programSqlite struct {
@@ -50,6 +55,7 @@ func NewDB(dbPath string) (*sqlx.DB, error) {
 
 // テーブル作成
 func Setup(db *sqlx.DB) error {
+	log.Debug().Msg("database setup ...")
 	// state: enum('scheduled', 'recording', 'done', 'failed')
 	_, err := db.Exec(`create table if not exists programs (
 		id integer primary key,
@@ -64,7 +70,7 @@ func Setup(db *sqlx.DB) error {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
 
-	_, err = db.Exec(`CREATE TRIGGER trigger_updated_at AFTER UPDATE ON programs
+	_, err = db.Exec(`CREATE TRIGGER if not exists trigger_updated_at AFTER UPDATE ON programs
 		BEGIN
 			UPDATE programs SET updated_at = DATETIME('now', 'localtime') WHERE rowid == NEW.rowid;
 		END;
@@ -72,6 +78,8 @@ func Setup(db *sqlx.DB) error {
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
+
+	log.Debug().Msg("database setup done")
 	return nil
 }
 
@@ -102,18 +110,23 @@ func (p *programDatabase) Save(ctx context.Context, pgram program.Program) error
 	// 既に番組情報が登録されていれば追加しない
 	// TODO: 番組表の変更に対応できない問題がある
 	if lineCount != 0 {
+		log.Trace().Msgf("skip save: program is already stored (id = %d)", pgram.ID)
 		return nil
 	}
 
+	log.Trace().Msgf("save program ... (id = %d)", pgram.ID)
 	pgramSqlite := modelProgramToProgramSqlite(pgram)
 	_, err = p.DB.NamedExecContext(ctx, "insert into programs (id, title, start, end, status) values (:id, :title, :start, :end, :status)", pgramSqlite)
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
+
+	log.Trace().Msgf("save program done (id = %d)", pgram.ID)
 	return nil
 }
 
 func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, duration time.Duration) ([]program.Program, error) {
+	log.Debug().Msgf("load program (duration = %s)", duration.String())
 	afterAbsoluteTime := now.Add(duration)
 
 	stmt, err := p.DB.PrepareNamedContext(ctx, `select id, title, start, end, status from programs where status = 'scheduled' and :now < start and start < :after`)
@@ -125,6 +138,12 @@ func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, durati
 	err = stmt.SelectContext(ctx, &pgramsSqlite, map[string]interface{}{"now": now, "after": afterAbsoluteTime})
 	if err != nil {
 		return nil, errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+
+	if len(pgramsSqlite) > 0 {
+		log.Debug().Msgf("found program(s) (len = %d)", len(pgramsSqlite))
+	} else {
+		log.Debug().Msg("not found program")
 	}
 
 	var pgrams []program.Program
