@@ -55,7 +55,7 @@ type RecConfig struct {
 func (u *recorder) RecPrepare(ctx context.Context, config RecConfig, isDebug bool, now time.Time) error {
 	var targetPgrams []program.Program
 	if isDebug {
-		log.Debug().Msg("use dummy programs")
+		log.Ctx(ctx).Debug().Msg("use dummy programs")
 		// ダミー番組の status を変更できていない！
 		targetPgrams = program.Dummies(now)
 	} else {
@@ -77,6 +77,8 @@ func (u *recorder) RecPrepare(ctx context.Context, config RecConfig, isDebug boo
 // 録画処理を呼び出す
 // 内部でリトライあり
 // これは goroutine として呼び出されることを想定
+// エラーが発生すれば Error レベルでログを出力してしまう
+// Fatal は exit してしまうので使わない
 func (u *recorder) rec(ctx context.Context, config RecConfig, targetPgram program.Program) {
 	// retryCount=0, 1, 2, 3 の計 4 回トライする
 	const retryMaxCount = 3
@@ -84,31 +86,30 @@ func (u *recorder) rec(ctx context.Context, config RecConfig, targetPgram progra
 
 	err := u.InfraPersistence.ChangeStatus(ctx, targetPgram, program.StatusRecording)
 	if err != nil {
-		log.Warn().Msgf("fail to change status (scheduled -> recording): %+v", err)
+		log.Ctx(ctx).Warn().Msgf("fail to change status (scheduled -> recording): %+v", err)
 		return
 	}
 
 	for retryCount <= retryMaxCount {
-		log.Debug().Msgf("rec ... (retryCount = %d)", retryCount)
+		log.Ctx(ctx).Debug().Msgf("rec ... (retryCount = %d)", retryCount)
 		err = u.Station.Rec(ctx, config.BasePath, targetPgram)
 		if err == nil {
-			log.Debug().Msgf("success rec (id = %d)", targetPgram.ID)
+			log.Ctx(ctx).Debug().Msgf("successfully recorded (program.ID = %d)", targetPgram.ID)
 			err := u.InfraPersistence.ChangeStatus(ctx, targetPgram, program.StatusDone)
 			if err != nil {
-				log.Warn().Msgf("fail to change status (recording -> done): %+v", err)
+				log.Ctx(ctx).Error().Msgf("fail to change status (recording -> done): %+v", err)
 				return
 			}
 			return
 		}
-		log.Warn().Msgf("fail to rec: %+v", err)
+		log.Ctx(ctx).Warn().Msgf("fail to rec: %+v", err)
 		retryCount++
 	}
 
-	// ひとまず warn で出力
 	// goroutine で呼び出されたとき他の進行中の録画 (goroutine) を犠牲にせずに error を戻し返すのが面倒？
-	log.Warn().Msgf("retry count exceeded (retryMaxCount = %d)", retryMaxCount)
+	log.Ctx(ctx).Error().Msgf("retry count exceeded (retryMaxCount = %d)", retryMaxCount)
 	err = u.InfraPersistence.ChangeStatus(ctx, targetPgram, program.StatusFailed)
 	if err != nil {
-		log.Warn().Msgf("fail to change status (recording -> failed): %+v", err)
+		log.Ctx(ctx).Error().Msgf("fail to change status (recording -> failed): %+v", err)
 	}
 }

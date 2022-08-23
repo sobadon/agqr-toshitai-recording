@@ -60,29 +60,40 @@ func run() error {
 
 	scheduler := gocron.NewScheduler(timeutil.LocationJST())
 
-	jobUcProgramUpdate := func(ctx context.Context) {
+	// job: update
+	jobUpdate := func(ctx context.Context, job gocron.Job) {
+		ctx = logutil.NewLogger().With().
+			Int("job_count", job.RunCount()).
+			Str("job", "update").
+			Logger().WithContext(ctx)
 		err := ucProgram.Update(ctx)
 		if err != nil {
 			log.Error().Msgf("%+v", err)
 		}
 	}
-	_, err = scheduler.Every("29m").Do(jobUcProgramUpdate, ctx)
+	_, err = scheduler.Every("29m").DoWithJobDetails(jobUpdate, ctx)
 	if err != nil {
 		return errors.Wrap(errutil.ErrScheduler, err.Error())
 	}
 
-	jobUcProgramRec := func(ctx context.Context) {
-		isDebug := false
+	// job: update
+	jobRec := func(ctx context.Context, job gocron.Job) {
+		ctx = logutil.NewLogger().With().
+			Int("job_count", job.RunCount()).
+			Str("job", "rec").
+			Logger().WithContext(ctx)
+
+		useDummyProgram := true
 		err := ucProgram.RecPrepare(ctx, usecase.RecConfig{
 			BasePath:     "./archive",
 			PrepareAfter: config.PrepareAfter,
-		}, isDebug, time.Now().In(timeutil.LocationJST()))
+		}, useDummyProgram, time.Now().In(timeutil.LocationJST()))
 		if err != nil {
 			log.Error().Msgf("%+v", err)
 		}
 	}
 	recPrepareInvokeInterval := 30 * time.Second
-	_, err = scheduler.Every(recPrepareInvokeInterval).Do(jobUcProgramRec, ctx)
+	_, err = scheduler.Every(recPrepareInvokeInterval).DoWithJobDetails(jobRec, ctx)
 	if err != nil {
 		return errors.Wrap(errutil.ErrScheduler, err.Error())
 	}
