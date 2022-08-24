@@ -39,12 +39,12 @@ func run() error {
 
 	infraSqlite := sqlite.New(db)
 	stationAgqr := agqr.New()
-	ucProgram := usecase.NewProgram(infraSqlite, stationAgqr)
+	ucRecorder := usecase.NewRecorder(infraSqlite, stationAgqr)
 
 	ctx := context.Background()
 	ctx, _ = context.WithTimeout(ctx, 5*time.Second)
 
-	err = ucProgram.Update(ctx)
+	err = ucRecorder.Update(ctx)
 	if err != nil {
 		return err
 	}

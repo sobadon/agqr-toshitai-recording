@@ -9,6 +9,7 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/go-co-op/gocron"
 	"github.com/pkg/errors"
+	"github.com/sobadon/agqr-toshitai-recording/domain/model/recorder"
 	"github.com/sobadon/agqr-toshitai-recording/infrastructures/agqr"
 	"github.com/sobadon/agqr-toshitai-recording/infrastructures/sqlite"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
@@ -54,7 +55,7 @@ func run() error {
 
 	infraSqlite := sqlite.New(db)
 	stationAgar := agqr.New()
-	ucProgram := usecase.NewProgram(infraSqlite, stationAgar)
+	ucRecorder := usecase.NewRecorder(infraSqlite, stationAgar)
 
 	ctx := context.Background()
 
@@ -66,7 +67,7 @@ func run() error {
 			Int("job_count", job.RunCount()).
 			Str("job", "update").
 			Logger().WithContext(ctx)
-		err := ucProgram.Update(ctx)
+		err := ucRecorder.Update(ctx)
 		if err != nil {
 			log.Error().Msgf("%+v", err)
 		}
@@ -84,7 +85,7 @@ func run() error {
 			Logger().WithContext(ctx)
 
 		useDummyProgram := true
-		err := ucProgram.RecPrepare(ctx, usecase.RecConfig{
+		err := ucRecorder.RecPrepare(ctx, recorder.Config{
 			BasePath:     "./archive",
 			PrepareAfter: config.PrepareAfter,
 		}, useDummyProgram, time.Now().In(timeutil.LocationJST()))

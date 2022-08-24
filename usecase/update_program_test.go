@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
+	"github.com/sobadon/agqr-toshitai-recording/domain/model/recorder"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
 	"github.com/sobadon/agqr-toshitai-recording/internal/timeutil"
 	mock_repository "github.com/sobadon/agqr-toshitai-recording/testdata/mock/domain/repository"
@@ -27,7 +28,7 @@ func Test_recorder_rec(t *testing.T) {
 		Station          *mock_repository.MockStation
 	}
 	type args struct {
-		config      RecConfig
+		config      recorder.Config
 		targetPgram program.Program
 	}
 	tests := []struct {
@@ -52,7 +53,7 @@ func Test_recorder_rec(t *testing.T) {
 					Return(nil)
 			},
 			args: args{
-				config: RecConfig{
+				config: recorder.Config{
 					BasePath:     "/archive",
 					PrepareAfter: 1 * time.Minute,
 				},
@@ -78,7 +79,7 @@ func Test_recorder_rec(t *testing.T) {
 					Return(nil)
 			},
 			args: args{
-				config: RecConfig{
+				config: recorder.Config{
 					BasePath:     "/archive",
 					PrepareAfter: 1 * time.Minute,
 				},
@@ -100,7 +101,7 @@ func Test_recorder_rec(t *testing.T) {
 					Return(nil)
 			},
 			args: args{
-				config: RecConfig{
+				config: recorder.Config{
 					BasePath:     "/archive",
 					PrepareAfter: 1 * time.Minute,
 				},
@@ -115,7 +116,7 @@ func Test_recorder_rec(t *testing.T) {
 
 			mockInfraPersistence := mock_repository.NewMockProgramPersistence(ctrl)
 			mockStation := mock_repository.NewMockStation(ctrl)
-			u := &recorder{
+			u := &ucRecorder{
 				InfraPersistence: mockInfraPersistence,
 				Station:          mockStation,
 			}
