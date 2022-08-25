@@ -12,12 +12,13 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
+	"github.com/sobadon/agqr-toshitai-recording/domain/model/recorder"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
 	"github.com/sobadon/agqr-toshitai-recording/internal/fileutil"
 )
 
-func (c *client) Rec(ctx context.Context, basePath string, targetPgram program.Program) error {
-	file := buildFilepath(basePath, targetPgram)
+func (c *client) Rec(ctx context.Context, config recorder.Config, targetPgram program.Program) error {
+	file := buildFilepath(config.BasePath, targetPgram)
 	err := fileutil.MkdirAllIfNotExist(filepath.Dir(file))
 	if err != nil {
 		return errors.Wrap(errutil.ErrInternal, err.Error())

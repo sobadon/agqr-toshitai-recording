@@ -61,7 +61,7 @@ func (u *ucRecorder) RecPrepare(ctx context.Context, config recorder.Config, isD
 
 	for _, targetPgram := range targetPgrams {
 		// rec 内部で雑にエラーハンドリングしちゃう
-		go u.rec(ctx, config, targetPgram)
+		go u.rec(ctx, config, now, targetPgram)
 	}
 
 	return nil
@@ -72,7 +72,7 @@ func (u *ucRecorder) RecPrepare(ctx context.Context, config recorder.Config, isD
 // これは goroutine として呼び出されることを想定
 // エラーが発生すれば Error レベルでログを出力してしまう
 // Fatal は exit してしまうので使わない
-func (u *ucRecorder) rec(ctx context.Context, config recorder.Config, targetPgram program.Program) {
+func (u *ucRecorder) rec(ctx context.Context, config recorder.Config, now time.Time, targetPgram program.Program) {
 	// retryCount=0, 1, 2, 3 の計 4 回トライする
 	const retryMaxCount = 3
 	retryCount := 0
@@ -85,7 +85,7 @@ func (u *ucRecorder) rec(ctx context.Context, config recorder.Config, targetPgra
 
 	for retryCount <= retryMaxCount {
 		log.Ctx(ctx).Debug().Msgf("rec ... (retryCount = %d)", retryCount)
-		err = u.Station.Rec(ctx, config.BasePath, targetPgram)
+		err = u.Station.Rec(ctx, config, targetPgram)
 		if err == nil {
 			log.Ctx(ctx).Debug().Msgf("successfully recorded (program.ID = %d)", targetPgram.ID)
 			err := u.InfraPersistence.ChangeStatus(ctx, targetPgram, program.StatusDone)

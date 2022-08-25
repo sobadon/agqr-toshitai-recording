@@ -12,6 +12,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	date "github.com/sobadon/agqr-toshitai-recording/domain/model/date"
 	program "github.com/sobadon/agqr-toshitai-recording/domain/model/program"
+	recorder "github.com/sobadon/agqr-toshitai-recording/domain/model/recorder"
 )
 
 // MockStation is a mock of Station interface.
@@ -53,17 +54,17 @@ func (mr *MockStationMockRecorder) GetPrograms(ctx, date interface{}) *gomock.Ca
 }
 
 // Rec mocks base method.
-func (m *MockStation) Rec(ctx context.Context, basePath string, targetPgram program.Program) error {
+func (m *MockStation) Rec(ctx context.Context, configRec recorder.Config, targetPgram program.Program) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Rec", ctx, basePath, targetPgram)
+	ret := m.ctrl.Call(m, "Rec", ctx, configRec, targetPgram)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Rec indicates an expected call of Rec.
-func (mr *MockStationMockRecorder) Rec(ctx, basePath, targetPgram interface{}) *gomock.Call {
+func (mr *MockStationMockRecorder) Rec(ctx, configRec, targetPgram interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rec", reflect.TypeOf((*MockStation)(nil).Rec), ctx, basePath, targetPgram)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rec", reflect.TypeOf((*MockStation)(nil).Rec), ctx, configRec, targetPgram)
 }
 
 // MockProgramPersistence is a mock of ProgramPersistence interface.

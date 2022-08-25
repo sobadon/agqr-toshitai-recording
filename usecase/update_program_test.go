@@ -23,6 +23,14 @@ func Test_recorder_rec(t *testing.T) {
 		Status: program.StatusScheduled,
 	}
 
+	now := time.Date(2022, 8, 3, 23, 58, 50, 0, timeutil.LocationJST())
+
+	configCommon := recorder.Config{
+		BasePath:     "/archive",
+		PrepareAfter: 1 * time.Minute,
+		Margin:       1 * time.Minute,
+	}
+
 	type fields struct {
 		InfraPersistence *mock_repository.MockProgramPersistence
 		Station          *mock_repository.MockStation
@@ -46,17 +54,14 @@ func Test_recorder_rec(t *testing.T) {
 					ChangeStatus(gomock.Any(), pgramNormal, program.StatusRecording).
 					Return(nil)
 				f.Station.EXPECT().
-					Rec(gomock.Any(), "/archive", pgramNormal).
+					Rec(gomock.Any(), configCommon, pgramNormal).
 					Return(nil)
 				f.InfraPersistence.EXPECT().
 					ChangeStatus(gomock.Any(), pgramNormal, program.StatusDone).
 					Return(nil)
 			},
 			args: args{
-				config: recorder.Config{
-					BasePath:     "/archive",
-					PrepareAfter: 1 * time.Minute,
-				},
+				config:      configCommon,
 				targetPgram: pgramNormal,
 			},
 		},
@@ -67,11 +72,11 @@ func Test_recorder_rec(t *testing.T) {
 					ChangeStatus(gomock.Any(), pgramNormal, program.StatusRecording).
 					Return(nil)
 				f.Station.EXPECT().
-					Rec(gomock.Any(), "/archive", pgramNormal).
+					Rec(gomock.Any(), configCommon, pgramNormal).
 					Return(errors.Wrap(errutil.ErrFfmpeg, "something error")).
 					Times(1)
 				f.Station.EXPECT().
-					Rec(gomock.Any(), "/archive", pgramNormal).
+					Rec(gomock.Any(), configCommon, pgramNormal).
 					Return(nil).
 					Times(1)
 				f.InfraPersistence.EXPECT().
@@ -79,10 +84,7 @@ func Test_recorder_rec(t *testing.T) {
 					Return(nil)
 			},
 			args: args{
-				config: recorder.Config{
-					BasePath:     "/archive",
-					PrepareAfter: 1 * time.Minute,
-				},
+				config:      configCommon,
 				targetPgram: pgramNormal,
 			},
 		},
@@ -93,7 +95,7 @@ func Test_recorder_rec(t *testing.T) {
 					ChangeStatus(gomock.Any(), pgramNormal, program.StatusRecording).
 					Return(nil)
 				f.Station.EXPECT().
-					Rec(gomock.Any(), "/archive", pgramNormal).
+					Rec(gomock.Any(), configCommon, pgramNormal).
 					Return(errors.Wrap(errutil.ErrFfmpeg, "something error")).
 					Times(4) // retryCount=0, 1, 2, 3 の計 4 回トライする
 				f.InfraPersistence.EXPECT().
@@ -101,10 +103,7 @@ func Test_recorder_rec(t *testing.T) {
 					Return(nil)
 			},
 			args: args{
-				config: recorder.Config{
-					BasePath:     "/archive",
-					PrepareAfter: 1 * time.Minute,
-				},
+				config:      configCommon,
 				targetPgram: pgramNormal,
 			},
 		},
@@ -125,8 +124,7 @@ func Test_recorder_rec(t *testing.T) {
 				Station:          mockStation,
 			}
 			tt.prepare(f)
-
-			u.rec(context.Background(), tt.args.config, tt.args.targetPgram)
+			u.rec(context.Background(), tt.args.config, now, tt.args.targetPgram)
 		})
 	}
 }
