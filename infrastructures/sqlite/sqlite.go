@@ -7,10 +7,44 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"github.com/sobadon/agqr-toshitai-recording/domain/model/program"
 	"github.com/sobadon/agqr-toshitai-recording/domain/repository"
 	"github.com/sobadon/agqr-toshitai-recording/internal/errutil"
+	"github.com/sobadon/agqr-toshitai-recording/internal/logutil"
 )
+
+var (
+	logc = logutil.NewLogger()
+)
+
+type programSqlite struct {
+	ID     int       `db:"id"`
+	Title  string    `db:"title"`
+	Start  time.Time `db:"start"`
+	End    time.Time `db:"end"`
+	Status string    `db:"status"`
+}
+
+func programSqliteToModelProgram(pgramSqlite programSqlite) program.Program {
+	return program.Program{
+		ID:     pgramSqlite.ID,
+		Title:  pgramSqlite.Title,
+		Start:  pgramSqlite.Start,
+		End:    pgramSqlite.End,
+		Status: program.Status(pgramSqlite.Status),
+	}
+}
+
+func modelProgramToProgramSqlite(pgram program.Program) programSqlite {
+	return programSqlite{
+		ID:     pgram.ID,
+		Title:  pgram.Title,
+		Start:  pgram.Start,
+		End:    pgram.End,
+		Status: pgram.Status.String(),
+	}
+}
 
 func NewDB(dbPath string) (*sqlx.DB, error) {
 	db, err := sqlx.Open("sqlite3", dbPath)
@@ -22,11 +56,14 @@ func NewDB(dbPath string) (*sqlx.DB, error) {
 
 // テーブル作成
 func Setup(db *sqlx.DB) error {
+	logc.Debug().Msg("database setup ...")
+	// state: enum('scheduled', 'recording', 'done', 'failed')
 	_, err := db.Exec(`create table if not exists programs (
 		id integer primary key,
 		title text not null,
 		start timestamp not null,
 		end timestamp not null,
+		status text not null,
 		created_at timestamp not null default (datetime('now', 'localtime')),
 		updated_at timestamp not null default (datetime('now', 'localtime'))
 	);`)
@@ -34,7 +71,7 @@ func Setup(db *sqlx.DB) error {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
 
-	_, err = db.Exec(`CREATE TRIGGER trigger_updated_at AFTER UPDATE ON programs
+	_, err = db.Exec(`CREATE TRIGGER if not exists trigger_updated_at AFTER UPDATE ON programs
 		BEGIN
 			UPDATE programs SET updated_at = DATETIME('now', 'localtime') WHERE rowid == NEW.rowid;
 		END;
@@ -42,6 +79,8 @@ func Setup(db *sqlx.DB) error {
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
+
+	logc.Debug().Msg("database setup done")
 	return nil
 }
 
@@ -72,25 +111,62 @@ func (p *programDatabase) Save(ctx context.Context, pgram program.Program) error
 	// 既に番組情報が登録されていれば追加しない
 	// TODO: 番組表の変更に対応できない問題がある
 	if lineCount != 0 {
+		log.Ctx(ctx).Trace().Msgf("skip save: program is already stored (id = %d)", pgram.ID)
 		return nil
 	}
 
-	type programSqlite struct {
-		ID    int       `db:"id"`
-		Title string    `db:"title"`
-		Start time.Time `db:"start"`
-		End   time.Time `db:"end"`
-	}
-
-	pgramSqlite := programSqlite{
-		ID:    pgram.ID,
-		Title: pgram.Title,
-		Start: pgram.Start,
-		End:   pgram.End,
-	}
-	_, err = p.DB.NamedExecContext(ctx, "insert into programs (id, title, start, end) values (:id, :title, :start, :end)", pgramSqlite)
+	log.Ctx(ctx).Trace().Msgf("save program ... (id = %d)", pgram.ID)
+	pgramSqlite := modelProgramToProgramSqlite(pgram)
+	_, err = p.DB.NamedExecContext(ctx, "insert into programs (id, title, start, end, status) values (:id, :title, :start, :end, :status)", pgramSqlite)
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
+
+	log.Ctx(ctx).Trace().Msgf("save program done (id = %d)", pgram.ID)
+	return nil
+}
+
+func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, duration time.Duration) ([]program.Program, error) {
+	log.Ctx(ctx).Debug().Msgf("load program ... (afterDuration = %s)", duration.String())
+	afterAbsoluteTime := now.Add(duration)
+
+	stmt, err := p.DB.PrepareNamedContext(ctx, `select id, title, start, end, status from programs where status = 'scheduled' and :now < start and start < :after`)
+	if err != nil {
+		return nil, errors.Wrap(errutil.ErrDatabasePrepare, err.Error())
+	}
+
+	var pgramsSqlite []programSqlite
+	err = stmt.SelectContext(ctx, &pgramsSqlite, map[string]interface{}{"now": now, "after": afterAbsoluteTime})
+	if err != nil {
+		return nil, errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+
+	if len(pgramsSqlite) > 0 {
+		log.Ctx(ctx).Debug().Msgf("found program(s) (len = %d)", len(pgramsSqlite))
+	} else {
+		log.Ctx(ctx).Debug().Msg("not found program")
+	}
+
+	var pgrams []program.Program
+	for _, pgramSqlite := range pgramsSqlite {
+		pgram := programSqliteToModelProgram(pgramSqlite)
+		pgrams = append(pgrams, pgram)
+	}
+
+	return pgrams, nil
+}
+
+func (p *programDatabase) ChangeStatus(ctx context.Context, pgram program.Program, newStatus program.Status) error {
+	var oldStatus string
+	err := p.DB.GetContext(ctx, &oldStatus, `select status from programs where id = ?`, pgram.ID)
+	if err != nil {
+		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+
+	_, err = p.DB.NamedExecContext(ctx, `update programs set status = :status where id = :id`, map[string]interface{}{"status": newStatus, "id": pgram.ID})
+	if err != nil {
+		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+	log.Ctx(ctx).Debug().Msgf("successfully changed status (id = %d, from = %s, to = %s)", pgram.ID, oldStatus, newStatus.String())
 	return nil
 }
