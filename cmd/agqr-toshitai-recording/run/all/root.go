@@ -84,7 +84,7 @@ func run() error {
 			Str("job", "rec").
 			Logger().WithContext(ctx)
 
-		useDummyProgram := true
+		useDummyProgram := false
 		err := ucRecorder.RecPrepare(ctx, recorder.Config{
 			ArchiveDir:   config.ArchiveDir,
 			PrepareAfter: config.PrepareAfter,
