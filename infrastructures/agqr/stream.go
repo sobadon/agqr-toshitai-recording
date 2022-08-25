@@ -23,7 +23,9 @@ func (c *client) Rec(ctx context.Context, config recorder.Config, targetPgram pr
 	if err != nil {
 		return errors.Wrap(errutil.ErrInternal, err.Error())
 	}
-	duration := calculateProgramDuration(targetPgram)
+
+	// 前後にマージンをとっているため、本来の番組時間だけでなくプラスちょいの間録画する
+	duration := calculateProgramDuration(targetPgram) + 2*config.Margin
 
 	cmd := exec.Command("ffmpeg",
 		"-y",

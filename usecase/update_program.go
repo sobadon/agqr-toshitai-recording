@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"flag"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -81,6 +82,14 @@ func (u *ucRecorder) rec(ctx context.Context, config recorder.Config, now time.T
 	if err != nil {
 		log.Ctx(ctx).Warn().Msgf("fail to change status (scheduled -> recording): %+v", err)
 		return
+	}
+
+	// ffmpeg 叩き前の sleep
+	sleepDuration := targetPgram.Start.Sub(now) - config.Margin
+	log.Ctx(ctx).Debug().Msgf("sleep ... (duration = %s)", sleepDuration)
+	if flag.Lookup("test.v") == nil {
+		// テスト実行時に time.Sleep() されると困っちゃうから無理くり無効に
+		time.Sleep(sleepDuration)
 	}
 
 	for retryCount <= retryMaxCount {

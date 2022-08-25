@@ -88,6 +88,7 @@ func run() error {
 		err := ucRecorder.RecPrepare(ctx, recorder.Config{
 			BasePath:     "./archive",
 			PrepareAfter: config.PrepareAfter,
+			Margin:       config.Margin,
 		}, useDummyProgram, time.Now().In(timeutil.LocationJST()))
 		if err != nil {
 			log.Error().Msgf("%+v", err)
