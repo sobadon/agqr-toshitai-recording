@@ -18,7 +18,7 @@ import (
 )
 
 func (c *client) Rec(ctx context.Context, config recorder.Config, targetPgram program.Program) error {
-	file := buildFilepath(config.BasePath, targetPgram)
+	file := buildFilepath(config.ArchiveDir, targetPgram)
 	err := fileutil.MkdirAllIfNotExist(filepath.Dir(file))
 	if err != nil {
 		return errors.Wrap(errutil.ErrInternal, err.Error())

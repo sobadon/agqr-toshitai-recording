@@ -86,7 +86,7 @@ func run() error {
 
 		useDummyProgram := true
 		err := ucRecorder.RecPrepare(ctx, recorder.Config{
-			BasePath:     "./archive",
+			ArchiveDir:   config.ArchiveDir,
 			PrepareAfter: config.PrepareAfter,
 			Margin:       config.Margin,
 		}, useDummyProgram, time.Now().In(timeutil.LocationJST()))

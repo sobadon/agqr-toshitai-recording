@@ -4,7 +4,7 @@ import "time"
 
 type Config struct {
 	// 保存先ディレクトリ
-	BasePath string
+	ArchiveDir string
 
 	// duration 後までの番組をすべて録画する
 	PrepareAfter time.Duration

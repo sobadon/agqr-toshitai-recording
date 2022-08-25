@@ -26,7 +26,7 @@ func Test_recorder_rec(t *testing.T) {
 	now := time.Date(2022, 8, 3, 23, 58, 50, 0, timeutil.LocationJST())
 
 	configCommon := recorder.Config{
-		BasePath:     "/archive",
+		ArchiveDir:   "/archive",
 		PrepareAfter: 1 * time.Minute,
 		Margin:       1 * time.Minute,
 	}
