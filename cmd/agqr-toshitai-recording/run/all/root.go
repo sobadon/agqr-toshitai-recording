@@ -38,7 +38,12 @@ func run() error {
 	log.Info().Msg("start")
 
 	var config config
-	err := env.Parse(&config, env.Options{Prefix: "ATR_"})
+	err := env.Parse(&config, env.Options{
+		Prefix: "ATR_",
+		OnSet: func(tag string, value interface{}, isDefault bool) {
+			log.Info().Msgf("Set %s to %v (default? %v)\n", tag, value, isDefault)
+		},
+	})
 	if err != nil {
 		return err
 	}
