@@ -72,7 +72,7 @@ func run() error {
 			log.Error().Msgf("%+v", err)
 		}
 	}
-	_, err = scheduler.Every("29m").DoWithJobDetails(jobUpdate, ctx)
+	_, err = scheduler.Every(29*time.Minute).DoWithJobDetails(jobUpdate, ctx)
 	if err != nil {
 		return errors.Wrap(errutil.ErrScheduler, err.Error())
 	}
@@ -94,8 +94,7 @@ func run() error {
 			log.Error().Msgf("%+v", err)
 		}
 	}
-	recPrepareInvokeInterval := 30 * time.Second
-	_, err = scheduler.Every(recPrepareInvokeInterval).DoWithJobDetails(jobRec, ctx)
+	_, err = scheduler.Every(30*time.Minute).DoWithJobDetails(jobRec, ctx)
 	if err != nil {
 		return errors.Wrap(errutil.ErrScheduler, err.Error())
 	}
