@@ -157,10 +157,16 @@ func (p *programDatabase) LoadStartIn(ctx context.Context, now time.Time, durati
 }
 
 func (p *programDatabase) ChangeStatus(ctx context.Context, pgram program.Program, newStatus program.Status) error {
-	_, err := p.DB.NamedExecContext(ctx, `update programs set status = :status where id = :id`, map[string]interface{}{"status": newStatus, "id": pgram.ID})
+	var oldStatus string
+	err := p.DB.GetContext(ctx, &oldStatus, `select status from programs where id = ?`, pgram.ID)
 	if err != nil {
 		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
 	}
-	log.Ctx(ctx).Debug().Msgf("successfully changed status (id = %d, from = %s, to = %s)", pgram.ID, pgram.Status.String(), newStatus.String())
+
+	_, err = p.DB.NamedExecContext(ctx, `update programs set status = :status where id = :id`, map[string]interface{}{"status": newStatus, "id": pgram.ID})
+	if err != nil {
+		return errors.Wrap(errutil.ErrDatabaseQuery, err.Error())
+	}
+	log.Ctx(ctx).Debug().Msgf("successfully changed status (id = %d, from = %s, to = %s)", pgram.ID, oldStatus, newStatus.String())
 	return nil
 }
