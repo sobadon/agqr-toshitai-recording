@@ -94,7 +94,7 @@ func run() error {
 			log.Error().Msgf("%+v", err)
 		}
 	}
-	_, err = scheduler.Every(30*time.Minute).DoWithJobDetails(jobRec, ctx)
+	_, err = scheduler.Every(30*time.Second).DoWithJobDetails(jobRec, ctx)
 	if err != nil {
 		return errors.Wrap(errutil.ErrScheduler, err.Error())
 	}
